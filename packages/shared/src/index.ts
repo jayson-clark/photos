@@ -138,6 +138,41 @@ export interface AddPhotosToAlbumRequest {
     photoIds: number[];
 }
 
+// People/Face detection types
+export interface Person {
+    id: number;
+    userId: number;
+    name?: string;
+    thumbnailPhotoId?: number;
+    thumbnailUrl?: string;
+    photoCount: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface FaceDetection {
+    id: number;
+    photoId: number;
+    personId?: number;
+    faceEncoding: string;
+    boundingBox: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    };
+    confidence?: number;
+    detectedAt: string;
+}
+
+export interface PersonWithPhotos extends Person {
+    photos: Photo[];
+}
+
+export interface UpdatePersonRequest {
+    name: string;
+}
+
 // API Response types
 export interface ApiError {
     error: string;

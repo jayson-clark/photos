@@ -7,6 +7,7 @@ import exifr from 'exifr';
 import { authMiddleware, requireWhitelisted, AuthRequest } from '../middleware/auth';
 import db from '../database';
 import { Photo, PhotoMetadata, PhotoWithMetadata } from '@photos/shared';
+import { detectFaces, findBestMatch } from '../utils/faceDetection';
 
 const router = Router();
 
@@ -78,6 +79,150 @@ async function createThumbnail(filePath: string, filename: string): Promise<void
         .resize(400, 400, { fit: 'cover' })
         .jpeg({ quality: 80 })
         .toFile(thumbnailPath);
+}
+
+// Helper to create face thumbnail from bounding box
+async function createFaceThumbnail(
+    filePath: string,
+    boundingBox: { x: number; y: number; width: number; height: number },
+    faceId: number
+): Promise<string> {
+    const facesDir = path.join(uploadDir, 'faces');
+    
+    // Ensure faces directory exists
+    if (!fs.existsSync(facesDir)) {
+        fs.mkdirSync(facesDir, { recursive: true });
+    }
+
+    const faceFilename = `face-${faceId}.jpg`;
+    const facePath = path.join(facesDir, faceFilename);
+
+    // Add padding around the face (20% on each side)
+    const padding = 0.2;
+    const paddedX = Math.max(0, Math.floor(boundingBox.x - boundingBox.width * padding));
+    const paddedY = Math.max(0, Math.floor(boundingBox.y - boundingBox.height * padding));
+    const paddedWidth = Math.floor(boundingBox.width * (1 + padding * 2));
+    const paddedHeight = Math.floor(boundingBox.height * (1 + padding * 2));
+
+    // Extract and resize the face region
+    await sharp(filePath)
+        .extract({
+            left: paddedX,
+            top: paddedY,
+            width: paddedWidth,
+            height: paddedHeight,
+        })
+        .resize(200, 200, { fit: 'cover', position: 'centre' })
+        .jpeg({ quality: 85 })
+        .toFile(facePath);
+
+    return faceFilename;
+}
+
+// Helper to detect and match faces in a photo
+async function detectFacesInPhoto(
+    filePath: string,
+    photoId: number,
+    userId: number
+): Promise<void> {
+    try {
+        // Detect faces in the photo
+        const detectedFaces = await detectFaces(filePath);
+
+        if (detectedFaces.length === 0) {
+            return; // No faces detected
+        }
+
+        // Get all existing people for this user with their encodings
+        const existingPeople = db
+            .prepare('SELECT id, face_encoding FROM people WHERE user_id = ?')
+            .all(userId) as Array<{ id: number; face_encoding: string }>;
+
+        const knownEncodings = existingPeople.map((p) => ({
+            personId: p.id,
+            encoding: JSON.parse(p.face_encoding) as number[],
+        }));
+
+        // Process each detected face
+        for (const face of detectedFaces) {
+            // Try to match with existing people
+            const matchedPersonId = findBestMatch(face.encoding, knownEncodings);
+
+            let personId: number;
+            let faceDetectionId: number;
+
+            if (matchedPersonId) {
+                // Face matches an existing person
+                personId = matchedPersonId;
+            } else {
+                // Create a new person for this face (will update with face thumbnail later)
+                const result = db
+                    .prepare(
+                        `
+          INSERT INTO people (user_id, face_encoding, thumbnail_photo_id)
+          VALUES (?, ?, ?)
+        `
+                    )
+                    .run(userId, JSON.stringify(face.encoding), photoId);
+
+                personId = result.lastInsertRowid as number;
+
+                // Add to known encodings for subsequent faces in this photo
+                knownEncodings.push({
+                    personId,
+                    encoding: face.encoding,
+                });
+            }
+
+            // Insert face detection record
+            const detectionResult = db.prepare(
+                `
+        INSERT INTO face_detections (photo_id, person_id, face_encoding, bounding_box, confidence)
+        VALUES (?, ?, ?, ?, ?)
+      `
+            ).run(
+                photoId,
+                personId,
+                JSON.stringify(face.encoding),
+                JSON.stringify(face.boundingBox),
+                face.confidence
+            );
+
+            faceDetectionId = detectionResult.lastInsertRowid as number;
+
+            // Create face thumbnail
+            try {
+                const faceFilename = await createFaceThumbnail(
+                    filePath,
+                    face.boundingBox,
+                    faceDetectionId
+                );
+
+                // Update person with face thumbnail if they don't have one yet
+                const person = db
+                    .prepare('SELECT face_thumbnail FROM people WHERE id = ?')
+                    .get(personId) as { face_thumbnail: string | null } | undefined;
+
+                if (!person?.face_thumbnail) {
+                    db.prepare('UPDATE people SET face_thumbnail = ? WHERE id = ?').run(
+                        faceFilename,
+                        personId
+                    );
+                }
+            } catch (error) {
+                console.error('Error creating face thumbnail:', error);
+                // Continue even if thumbnail creation fails
+            }
+
+            // Update person's updated_at timestamp
+            db.prepare('UPDATE people SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(
+                personId
+            );
+        }
+    } catch (error) {
+        console.error('Error in detectFacesInPhoto:', error);
+        throw error;
+    }
 }
 
 // Upload photos (requires whitelist)
@@ -177,6 +322,11 @@ router.post(
                 photo.thumbnailUrl = `/uploads/thumbnails/${photo.filename}`;
 
                 photos.push(photo);
+
+                // Detect faces in the photo (async, don't block response)
+                detectFacesInPhoto(file.path, photoId, req.userId!).catch((err) =>
+                    console.error('Face detection error:', err)
+                );
             }
 
             res.status(201).json({ photos });

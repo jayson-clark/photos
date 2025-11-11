@@ -8,6 +8,7 @@ import Photos from './pages/Photos';
 import Albums from './pages/Albums';
 import AlbumDetail from './pages/AlbumDetail';
 import People from './pages/People';
+import PersonDetail from './pages/PersonDetail';
 import Places from './pages/Places';
 import Admin from './pages/Admin';
 
@@ -53,6 +54,7 @@ function App() {
                     <Route path="photos" element={<Photos />} />
                     <Route path="albums" element={<Albums />} />
                     <Route path="people" element={<People />} />
+                    <Route path="people/:id" element={<PersonDetail />} />
                     <Route path="places" element={<Places />} />
                     <Route path="recent" element={<Photos />} />
                     <Route path="favorites" element={<Photos />} />

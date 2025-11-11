@@ -16,6 +16,9 @@ import type {
     CreateAlbumRequest,
     UpdateAlbumRequest,
     AddPhotosToAlbumRequest,
+    Person,
+    PersonWithPhotos,
+    UpdatePersonRequest,
 } from '@photos/shared';
 
 const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
@@ -82,6 +85,14 @@ export const adminAPI = {
     getUsers: () => api.get<User[]>('/api/admin/users'),
     updateWhitelist: (userId: number, isWhitelisted: boolean) =>
         api.patch<User>(`/api/admin/users/${userId}/whitelist`, { isWhitelisted }),
+};
+
+// People API
+export const peopleAPI = {
+    getAll: () => api.get<Person[]>('/api/people'),
+    getById: (id: number) => api.get<PersonWithPhotos>(`/api/people/${id}`),
+    update: (id: number, data: UpdatePersonRequest) => api.patch<Person>(`/api/people/${id}`, data),
+    delete: (id: number) => api.delete(`/api/people/${id}`),
 };
 
 export default api;
