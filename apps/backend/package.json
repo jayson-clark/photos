@@ -5,12 +5,17 @@
     "scripts": {
         "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
         "build": "tsc",
-        "start": "node dist/index.js"
+        "start": "node dist/index.js",
+        "download-models": "node scripts/download-models.js",
+        "postinstall": "npm run download-models"
     },
     "dependencies": {
         "@photos/shared": "*",
+        "@tensorflow/tfjs-node": "^4.22.0",
+        "@vladmandic/face-api": "^1.7.15",
         "bcryptjs": "^2.4.3",
         "better-sqlite3": "^9.2.2",
+        "canvas": "^3.2.0",
         "cors": "^2.8.5",
         "dotenv": "^16.3.1",
         "exif-parser": "^0.1.12",

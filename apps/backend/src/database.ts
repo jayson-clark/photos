@@ -117,6 +117,37 @@ export function initDatabase() {
     )
   `);
 
+    // Create people table - represents unique individuals detected in photos
+    db.exec(`
+    CREATE TABLE IF NOT EXISTS people (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      name TEXT,
+      thumbnail_photo_id INTEGER,
+      face_thumbnail TEXT,
+      face_encoding TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (thumbnail_photo_id) REFERENCES photos(id) ON DELETE SET NULL
+    )
+  `);
+
+    // Create face_detections table - tracks all face occurrences in photos
+    db.exec(`
+    CREATE TABLE IF NOT EXISTS face_detections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      photo_id INTEGER NOT NULL,
+      person_id INTEGER,
+      face_encoding TEXT NOT NULL,
+      bounding_box TEXT NOT NULL,
+      confidence REAL,
+      detected_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (photo_id) REFERENCES photos(id) ON DELETE CASCADE,
+      FOREIGN KEY (person_id) REFERENCES people(id) ON DELETE CASCADE
+    )
+  `);
+
     // Create indexes
     db.exec(`
     CREATE INDEX IF NOT EXISTS idx_photos_user_id ON photos(user_id);
@@ -126,6 +157,9 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_album_shares_album_id ON album_shares(album_id);
     CREATE INDEX IF NOT EXISTS idx_album_shares_user_id ON album_shares(user_id);
     CREATE INDEX IF NOT EXISTS idx_share_links_token ON share_links(token);
+    CREATE INDEX IF NOT EXISTS idx_people_user_id ON people(user_id);
+    CREATE INDEX IF NOT EXISTS idx_face_detections_photo_id ON face_detections(photo_id);
+    CREATE INDEX IF NOT EXISTS idx_face_detections_person_id ON face_detections(person_id);
   `);
 
     console.log('✅ Database initialized');
