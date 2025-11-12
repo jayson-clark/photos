@@ -165,6 +165,11 @@ export interface FaceDetection {
     detectedAt: string;
 }
 
+export interface FaceDetectionWithPerson extends FaceDetection {
+    personName?: string;
+    personThumbnailUrl?: string;
+}
+
 export interface PersonWithPhotos extends Person {
     photos: Photo[];
 }

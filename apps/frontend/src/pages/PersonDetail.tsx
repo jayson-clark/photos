@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit2, UserCircle } from 'lucide-react';
+import { ArrowLeft, Edit2, UserCircle, Image } from 'lucide-react';
 import { peopleAPI } from '../lib/api';
 import { PersonWithPhotos } from '@photos/shared';
 import PhotoViewer from '../components/PhotoViewer';
@@ -13,6 +13,7 @@ export default function PersonDetail() {
     const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
     const [editingName, setEditingName] = useState(false);
     const [name, setName] = useState('');
+    const [settingThumbnail, setSettingThumbnail] = useState(false);
 
     const handlePhotoNavigate = (photo: any) => {
         if (!person) return;
@@ -50,6 +51,20 @@ export default function PersonDetail() {
             setEditingName(false);
         } catch (error) {
             console.error('Failed to update person:', error);
+        }
+    };
+
+    const handleSetThumbnail = async (photoId: number) => {
+        if (!person) return;
+
+        try {
+            await peopleAPI.setThumbnail(person.id, photoId);
+            // Reload person to get updated thumbnail
+            await loadPerson(person.id);
+            setSettingThumbnail(false);
+        } catch (error) {
+            console.error('Failed to set thumbnail:', error);
+            alert('Failed to set thumbnail. Please try again.');
         }
     };
 
@@ -151,9 +166,20 @@ export default function PersonDetail() {
                                 </button>
                             </div>
                         )}
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 mb-3">
                             {person.photoCount} {person.photoCount === 1 ? 'photo' : 'photos'}
                         </p>
+                        <button
+                            onClick={() => setSettingThumbnail(!settingThumbnail)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                                settingThumbnail
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            <Image className="w-4 h-4" />
+                            {settingThumbnail ? 'Click a photo to set as thumbnail' : 'Change Thumbnail'}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -166,14 +192,29 @@ export default function PersonDetail() {
                     {person.photos.map((photo, index) => (
                         <div
                             key={photo.id}
-                            className="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
-                            onClick={() => setSelectedPhotoIndex(index)}
+                            className={`relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-all ${
+                                settingThumbnail ? 'ring-2 ring-blue-500 ring-offset-2' : ''
+                            }`}
+                            onClick={() => {
+                                if (settingThumbnail) {
+                                    handleSetThumbnail(photo.id);
+                                } else {
+                                    setSelectedPhotoIndex(index);
+                                }
+                            }}
                         >
                             <img
                                 src={`http://localhost:3001${photo.thumbnailUrl || photo.url}`}
                                 alt={photo.originalName}
                                 className="w-full h-full object-cover"
                             />
+                            {settingThumbnail && (
+                                <div className="absolute inset-0 bg-blue-500 bg-opacity-20 flex items-center justify-center">
+                                    <div className="bg-blue-600 text-white px-3 py-1 rounded-lg text-sm font-medium">
+                                        Set as Thumbnail
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

@@ -19,6 +19,7 @@ import type {
     Person,
     PersonWithPhotos,
     UpdatePersonRequest,
+    FaceDetectionWithPerson,
 } from '@photos/shared';
 
 const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
@@ -48,6 +49,7 @@ export const photosAPI = {
     getAll: () => api.get<Photo[]>('/api/photos'),
     getById: (id: number) => api.get<Photo>(`/api/photos/${id}`),
     getMetadata: (id: number) => api.get<PhotoWithMetadata>(`/api/photos/${id}/metadata`),
+    getFaces: (id: number) => api.get<FaceDetectionWithPerson[]>(`/api/photos/${id}/faces`),
     upload: (formData: FormData) => api.post<{ photos: Photo[] }>('/api/photos', formData),
     delete: (id: number) => api.delete(`/api/photos/${id}`),
 };
@@ -93,6 +95,18 @@ export const peopleAPI = {
     getById: (id: number) => api.get<PersonWithPhotos>(`/api/people/${id}`),
     update: (id: number, data: UpdatePersonRequest) => api.patch<Person>(`/api/people/${id}`, data),
     delete: (id: number) => api.delete(`/api/people/${id}`),
+    setThumbnail: (personId: number, photoId: number) =>
+        api.post(`/api/people/${personId}/thumbnail/${photoId}`),
+    merge: (targetId: number, sourceId: number) =>
+        api.post(`/api/people/${targetId}/merge/${sourceId}`),
+    reassignPhoto: (personId: number, photoId: number, data: { targetPersonId?: number; createNew?: boolean }) =>
+        api.post(`/api/people/${personId}/photos/${photoId}/reassign`, data),
+    removePhoto: (personId: number, photoId: number) =>
+        api.delete(`/api/people/${personId}/photos/${photoId}`),
+    reassignFace: (faceDetectionId: number, data: { targetPersonId?: number; createNew?: boolean }) =>
+        api.post(`/api/people/faces/${faceDetectionId}/reassign`, data),
+    removeFace: (faceDetectionId: number) =>
+        api.delete(`/api/people/faces/${faceDetectionId}`),
 };
 
 export default api;

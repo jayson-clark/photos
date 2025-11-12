@@ -82,11 +82,21 @@ async function createThumbnail(filePath: string, filename: string): Promise<void
 }
 
 // Helper to create face thumbnail from bounding box
-async function createFaceThumbnail(
-    filePath: string,
+export async function createFaceThumbnail(
+    photoIdOrPath: number | string,
     boundingBox: { x: number; y: number; width: number; height: number },
     faceId: number
 ): Promise<string> {
+    // Get file path - either from photoId or use the path directly
+    let filePath: string;
+    if (typeof photoIdOrPath === 'number') {
+        const photo = db.prepare('SELECT filename FROM photos WHERE id = ?').get(photoIdOrPath) as any;
+        if (!photo) throw new Error('Photo not found');
+        filePath = path.join(uploadDir, photo.filename);
+    } else {
+        filePath = photoIdOrPath;
+    }
+
     const facesDir = path.join(uploadDir, 'faces');
     
     // Ensure faces directory exists
@@ -97,8 +107,8 @@ async function createFaceThumbnail(
     const faceFilename = `face-${faceId}.jpg`;
     const facePath = path.join(facesDir, faceFilename);
 
-    // Add padding around the face (20% on each side)
-    const padding = 0.2;
+    // Add padding around the face (50% on each side for more context)
+    const padding = 0.5;
     const paddedX = Math.max(0, Math.floor(boundingBox.x - boundingBox.width * padding));
     const paddedY = Math.max(0, Math.floor(boundingBox.y - boundingBox.height * padding));
     const paddedWidth = Math.floor(boundingBox.width * (1 + padding * 2));
@@ -479,6 +489,53 @@ router.get('/:id/metadata', authMiddleware, (req: AuthRequest, res) => {
     } catch (error) {
         console.error('Get metadata error:', error);
         res.status(500).json({ error: 'Internal Server Error', message: 'Failed to get metadata' });
+    }
+});
+
+// Get face detections for a photo
+router.get('/:id/faces', authMiddleware, (req: AuthRequest, res) => {
+    try {
+        // First verify the photo belongs to the user
+        const photo = db
+            .prepare('SELECT id FROM photos WHERE id = ? AND user_id = ?')
+            .get(req.params.id, req.userId);
+
+        if (!photo) {
+            return res.status(404).json({ error: 'Not Found', message: 'Photo not found' });
+        }
+
+        const faceDetections = db
+            .prepare(
+                `
+                SELECT 
+                    fd.id,
+                    fd.photo_id as photoId,
+                    fd.person_id as personId,
+                    fd.bounding_box as boundingBox,
+                    fd.confidence,
+                    fd.detected_at as detectedAt,
+                    p.id as personId,
+                    p.name as personName,
+                    p.face_thumbnail as personThumbnail
+                FROM face_detections fd
+                LEFT JOIN people p ON fd.person_id = p.id
+                WHERE fd.photo_id = ?
+                ORDER BY fd.id
+                `
+            )
+            .all(req.params.id);
+
+        // Parse bounding box JSON strings
+        const faces = faceDetections.map((face: any) => ({
+            ...face,
+            boundingBox: JSON.parse(face.boundingBox),
+            personThumbnailUrl: face.personThumbnail ? `/uploads/faces/${face.personThumbnail}` : null,
+        }));
+
+        res.json(faces);
+    } catch (error) {
+        console.error('Get face detections error:', error);
+        res.status(500).json({ error: 'Internal Server Error', message: 'Failed to get face detections' });
     }
 });
 
