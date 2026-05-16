@@ -107,7 +107,7 @@ export default function PersonDetail() {
                     <div className="w-32 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                         {person.thumbnailUrl ? (
                             <img
-                                src={`http://localhost:3001${person.thumbnailUrl}`}
+                                src={`${person.thumbnailUrl}`}
                                 alt={person.name || 'Unknown'}
                                 className="w-full h-full object-cover"
                             />
@@ -206,7 +206,7 @@ export default function PersonDetail() {
                             }}
                         >
                             <img
-                                src={`http://localhost:3001${photo.thumbnailUrl || photo.url}`}
+                                src={`${photo.thumbnailUrl || photo.url}`}
                                 alt={photo.originalName}
                                 className="w-full h-full object-cover"
                             />

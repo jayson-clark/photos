@@ -22,7 +22,9 @@ import type {
     FaceDetectionWithPerson,
 } from '@photos/shared';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
+// Same-origin in prod (backend serves the frontend); dev uses Vite's proxy (see vite.config.ts).
+// Override with VITE_API_URL only if pointing to a remote backend.
+const API_URL = (import.meta as any).env?.VITE_API_URL || '';
 
 const api = axios.create({
     baseURL: API_URL,

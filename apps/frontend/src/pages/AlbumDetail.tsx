@@ -321,7 +321,7 @@ export default function AlbumDetail() {
                             onClick={() => setSelectedPhoto(photo)}
                         >
                             <img
-                                src={`http://localhost:3001${photo.thumbnailUrl || photo.url}`}
+                                src={`${photo.thumbnailUrl || photo.url}`}
                                 alt={photo.originalName}
                                 className="w-full h-full object-cover rounded-lg hover:opacity-90 transition"
                             />
@@ -407,7 +407,7 @@ export default function AlbumDetail() {
                                             }}
                                         >
                                             <img
-                                                src={`http://localhost:3001${
+                                                src={`${
                                                     photo.thumbnailUrl || photo.url
                                                 }`}
                                                 alt={photo.originalName}

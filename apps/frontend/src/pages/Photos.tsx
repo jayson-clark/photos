@@ -134,7 +134,7 @@ export default function Photos() {
                                         onClick={() => setSelectedPhoto(photo)}
                                     >
                                         <img
-                                            src={`http://localhost:3001${
+                                            src={`${
                                                 photo.thumbnailUrl || photo.url
                                             }`}
                                             alt={photo.originalName}

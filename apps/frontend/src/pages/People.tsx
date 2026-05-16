@@ -196,7 +196,7 @@ export default function People() {
                             <div className="aspect-square relative bg-gray-100">
                                 {person.thumbnailUrl ? (
                                     <img
-                                        src={`http://localhost:3001${person.thumbnailUrl}`}
+                                        src={`${person.thumbnailUrl}`}
                                         alt={person.name || 'Unknown'}
                                         className="w-full h-full object-cover"
                                     />

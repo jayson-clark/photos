@@ -202,7 +202,7 @@ export default function PhotoViewer({
 
     const handleDownload = () => {
         const link = document.createElement('a');
-        link.href = `http://localhost:3001${photo.url}`;
+        link.href = `${photo.url}`;
         link.download = photo.originalName;
         link.click();
     };
@@ -294,7 +294,7 @@ export default function PhotoViewer({
                     <div className="relative">
                         <img
                             ref={imageRef}
-                            src={`http://localhost:3001${photo.url}`}
+                            src={`${photo.url}`}
                             alt={photo.originalName}
                             className="max-w-full max-h-full object-contain"
                         />
@@ -386,7 +386,7 @@ export default function PhotoViewer({
                                         >
                                             {face.personThumbnailUrl ? (
                                                 <img
-                                                    src={`http://localhost:3001${face.personThumbnailUrl}`}
+                                                    src={`${face.personThumbnailUrl}`}
                                                     alt={face.personName || 'Unknown'}
                                                     className="w-12 h-12 rounded-full object-cover"
                                                 />
@@ -552,7 +552,7 @@ export default function PhotoViewer({
                                 <div
                                     className="absolute inset-0 bg-center bg-no-repeat"
                                     style={{
-                                        backgroundImage: `url(http://localhost:3001${photo.url})`,
+                                        backgroundImage: `url(${photo.url})`,
                                         backgroundSize: `${
                                             ((photo.width || 0) / managingFace.boundingBox.width) *
                                             100
@@ -579,7 +579,7 @@ export default function PhotoViewer({
                             <div className="flex items-center gap-3">
                                 {managingFace.personThumbnailUrl ? (
                                     <img
-                                        src={`http://localhost:3001${managingFace.personThumbnailUrl}`}
+                                        src={`${managingFace.personThumbnailUrl}`}
                                         alt={managingFace.personName || 'Unknown'}
                                         className="w-12 h-12 rounded-full object-cover"
                                     />
@@ -616,7 +616,7 @@ export default function PhotoViewer({
                                             >
                                                 {p.thumbnailUrl ? (
                                                     <img
-                                                        src={`http://localhost:3001${p.thumbnailUrl}`}
+                                                        src={`${p.thumbnailUrl}`}
                                                         alt={p.name || 'Unknown'}
                                                         className="w-10 h-10 rounded-full object-cover"
                                                     />
