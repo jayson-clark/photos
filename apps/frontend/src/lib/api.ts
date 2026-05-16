@@ -99,14 +99,18 @@ export const peopleAPI = {
         api.post(`/api/people/${personId}/thumbnail/${photoId}`),
     merge: (targetId: number, sourceId: number) =>
         api.post(`/api/people/${targetId}/merge/${sourceId}`),
-    reassignPhoto: (personId: number, photoId: number, data: { targetPersonId?: number; createNew?: boolean }) =>
-        api.post(`/api/people/${personId}/photos/${photoId}/reassign`, data),
+    reassignPhoto: (
+        personId: number,
+        photoId: number,
+        data: { targetPersonId?: number; createNew?: boolean }
+    ) => api.post(`/api/people/${personId}/photos/${photoId}/reassign`, data),
     removePhoto: (personId: number, photoId: number) =>
         api.delete(`/api/people/${personId}/photos/${photoId}`),
-    reassignFace: (faceDetectionId: number, data: { targetPersonId?: number; createNew?: boolean }) =>
-        api.post(`/api/people/faces/${faceDetectionId}/reassign`, data),
-    removeFace: (faceDetectionId: number) =>
-        api.delete(`/api/people/faces/${faceDetectionId}`),
+    reassignFace: (
+        faceDetectionId: number,
+        data: { targetPersonId?: number; createNew?: boolean }
+    ) => api.post(`/api/people/faces/${faceDetectionId}/reassign`, data),
+    removeFace: (faceDetectionId: number) => api.delete(`/api/people/faces/${faceDetectionId}`),
 };
 
 export default api;

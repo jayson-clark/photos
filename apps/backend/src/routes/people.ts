@@ -229,13 +229,9 @@ router.post('/:id/thumbnail/:photoId', authMiddleware, async (req: AuthRequest, 
         // Import the createFaceThumbnail function from photos route
         const { createFaceThumbnail } = require('./photos');
         const boundingBox = JSON.parse(faceDetection.bounding_box);
-        
+
         // Create new face thumbnail
-        const faceFilename = await createFaceThumbnail(
-            photoId,
-            boundingBox,
-            faceDetection.id
-        );
+        const faceFilename = await createFaceThumbnail(photoId, boundingBox, faceDetection.id);
 
         // Update person with new thumbnail
         db.prepare(
@@ -356,13 +352,15 @@ router.post('/:personId/photos/:photoId/reassign', authMiddleware, (req: AuthReq
 
         // Get face detections for this person in this photo
         const faceDetections = db
-            .prepare('SELECT id, face_encoding, bounding_box, confidence FROM face_detections WHERE person_id = ? AND photo_id = ?')
+            .prepare(
+                'SELECT id, face_encoding, bounding_box, confidence FROM face_detections WHERE person_id = ? AND photo_id = ?'
+            )
             .all(personId, photoId) as Array<{
-                id: number;
-                face_encoding: string;
-                bounding_box: string;
-                confidence: number;
-            }>;
+            id: number;
+            face_encoding: string;
+            bounding_box: string;
+            confidence: number;
+        }>;
 
         if (faceDetections.length === 0) {
             return res.status(404).json({
@@ -463,102 +461,98 @@ router.delete('/:personId/photos/:photoId', authMiddleware, (req: AuthRequest, r
 });
 
 // Reassign a single face detection to another person
-router.post(
-    '/faces/:faceDetectionId/reassign',
-    authMiddleware,
-    (req: AuthRequest, res) => {
-        try {
-            const faceDetectionId = parseInt(req.params.faceDetectionId);
-            const { targetPersonId, createNew } = req.body;
+router.post('/faces/:faceDetectionId/reassign', authMiddleware, (req: AuthRequest, res) => {
+    try {
+        const faceDetectionId = parseInt(req.params.faceDetectionId);
+        const { targetPersonId, createNew } = req.body;
 
-            // Get the face detection and verify ownership
-            const faceDetection = db
-                .prepare(
-                    `
+        // Get the face detection and verify ownership
+        const faceDetection = db
+            .prepare(
+                `
                     SELECT fd.id, fd.person_id, fd.photo_id, fd.face_encoding, p.user_id
                     FROM face_detections fd
                     LEFT JOIN people p ON fd.person_id = p.id
                     LEFT JOIN photos ph ON fd.photo_id = ph.id
                     WHERE fd.id = ? AND (p.user_id = ? OR ph.user_id = ?)
                     `
-                )
-                .get(faceDetectionId, req.userId, req.userId) as any;
+            )
+            .get(faceDetectionId, req.userId, req.userId) as any;
 
-            if (!faceDetection) {
-                return res.status(404).json({
-                    error: 'Not Found',
-                    message: 'Face detection not found',
-                });
-            }
-
-            let newPersonId: number;
-
-            if (createNew) {
-                // Create new person from this face
-                const result = db
-                    .prepare(
-                        'INSERT INTO people (user_id, face_encoding, thumbnail_photo_id) VALUES (?, ?, ?)'
-                    )
-                    .run(req.userId, faceDetection.face_encoding, faceDetection.photo_id);
-
-                newPersonId = result.lastInsertRowid as number;
-
-                // Create face thumbnail for new person
-                const boundingBoxRow = db
-                    .prepare('SELECT bounding_box FROM face_detections WHERE id = ?')
-                    .get(faceDetectionId) as any;
-                
-                const boundingBox = JSON.parse(boundingBoxRow.bounding_box);
-
-                // Import createFaceThumbnail from photos route
-                // For now, we'll skip this and let it be handled separately
-            } else if (targetPersonId) {
-                // Verify target person exists and belongs to user
-                const targetPerson = db
-                    .prepare('SELECT id FROM people WHERE id = ? AND user_id = ?')
-                    .get(targetPersonId, req.userId);
-
-                if (!targetPerson) {
-                    return res.status(404).json({
-                        error: 'Not Found',
-                        message: 'Target person not found',
-                    });
-                }
-
-                newPersonId = targetPersonId;
-            } else {
-                return res.status(400).json({
-                    error: 'Bad Request',
-                    message: 'Must provide targetPersonId or set createNew to true',
-                });
-            }
-
-            // Update the face detection
-            db.prepare('UPDATE face_detections SET person_id = ? WHERE id = ?').run(
-                newPersonId,
-                faceDetectionId
-            );
-
-            // Update timestamps
-            if (faceDetection.person_id) {
-                db.prepare('UPDATE people SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(
-                    faceDetection.person_id
-                );
-            }
-            db.prepare('UPDATE people SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(
-                newPersonId
-            );
-
-            res.json({ success: true, newPersonId });
-        } catch (error) {
-            console.error('Reassign face detection error:', error);
-            res.status(500).json({
-                error: 'Internal Server Error',
-                message: 'Failed to reassign face detection',
+        if (!faceDetection) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: 'Face detection not found',
             });
         }
+
+        let newPersonId: number;
+
+        if (createNew) {
+            // Create new person from this face
+            const result = db
+                .prepare(
+                    'INSERT INTO people (user_id, face_encoding, thumbnail_photo_id) VALUES (?, ?, ?)'
+                )
+                .run(req.userId, faceDetection.face_encoding, faceDetection.photo_id);
+
+            newPersonId = result.lastInsertRowid as number;
+
+            // Create face thumbnail for new person
+            const boundingBoxRow = db
+                .prepare('SELECT bounding_box FROM face_detections WHERE id = ?')
+                .get(faceDetectionId) as any;
+
+            const boundingBox = JSON.parse(boundingBoxRow.bounding_box);
+
+            // Import createFaceThumbnail from photos route
+            // For now, we'll skip this and let it be handled separately
+        } else if (targetPersonId) {
+            // Verify target person exists and belongs to user
+            const targetPerson = db
+                .prepare('SELECT id FROM people WHERE id = ? AND user_id = ?')
+                .get(targetPersonId, req.userId);
+
+            if (!targetPerson) {
+                return res.status(404).json({
+                    error: 'Not Found',
+                    message: 'Target person not found',
+                });
+            }
+
+            newPersonId = targetPersonId;
+        } else {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'Must provide targetPersonId or set createNew to true',
+            });
+        }
+
+        // Update the face detection
+        db.prepare('UPDATE face_detections SET person_id = ? WHERE id = ?').run(
+            newPersonId,
+            faceDetectionId
+        );
+
+        // Update timestamps
+        if (faceDetection.person_id) {
+            db.prepare('UPDATE people SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(
+                faceDetection.person_id
+            );
+        }
+        db.prepare('UPDATE people SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(
+            newPersonId
+        );
+
+        res.json({ success: true, newPersonId });
+    } catch (error) {
+        console.error('Reassign face detection error:', error);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: 'Failed to reassign face detection',
+        });
     }
-);
+});
 
 // Remove a single face detection
 router.delete('/faces/:faceDetectionId', authMiddleware, (req: AuthRequest, res) => {

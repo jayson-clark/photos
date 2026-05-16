@@ -15,5 +15,6 @@ if (!u.isBuffer) u.isBuffer = (x: unknown) => Buffer.isBuffer(x);
 if (!u.isDate) u.isDate = (x: unknown) => x instanceof Date;
 if (!u.isError) u.isError = (x: unknown) => x instanceof Error;
 if (!u.isRegExp) u.isRegExp = (x: unknown) => x instanceof RegExp;
-if (!u.isPrimitive) u.isPrimitive = (x: unknown) =>
-  x === null || (typeof x !== 'object' && typeof x !== 'function');
+if (!u.isPrimitive)
+    u.isPrimitive = (x: unknown) =>
+        x === null || (typeof x !== 'object' && typeof x !== 'function');

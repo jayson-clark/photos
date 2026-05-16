@@ -99,7 +99,7 @@ export default function PhotoViewer({
             const scaleX = containerRect.width / img.naturalWidth;
             const scaleY = containerRect.height / img.naturalHeight;
             const scale = Math.min(scaleX, scaleY);
-            
+
             const displayWidth = img.naturalWidth * scale;
             const displayHeight = img.naturalHeight * scale;
             const offsetX = (containerRect.width - displayWidth) / 2;
@@ -298,21 +298,19 @@ export default function PhotoViewer({
                             alt={photo.originalName}
                             className="max-w-full max-h-full object-contain"
                         />
-                        
+
                         {/* Face bounding boxes overlay */}
                         {showFaces && faceDetections.length > 0 && (
                             <div className="absolute inset-0 pointer-events-none">
                                 {faceDetections.map((face) => {
                                     const { x, y, width, height } = face.boundingBox;
                                     const isSelected = selectedFace === face.id;
-                                    
+
                                     return (
                                         <div
                                             key={face.id}
                                             className={`absolute border-2 rounded-lg ${
-                                                isSelected
-                                                    ? 'border-blue-500'
-                                                    : 'border-green-500'
+                                                isSelected ? 'border-blue-500' : 'border-green-500'
                                             } cursor-pointer pointer-events-auto transition-all hover:border-blue-400`}
                                             style={{
                                                 left: `${x * imageScale.scaleX}px`,
@@ -357,7 +355,7 @@ export default function PhotoViewer({
                                         {showFaces ? 'Hide' : 'Show'} Faces
                                     </button>
                                 </div>
-                                
+
                                 <div className="space-y-2">
                                     {faceDetections.map((face) => (
                                         <div
@@ -371,7 +369,11 @@ export default function PhotoViewer({
                                                 if (showFaces) setSelectedFace(face.id);
                                             }}
                                             onMouseLeave={() => {
-                                                if (showFaces && selectedFace === face.id && !managingFace) {
+                                                if (
+                                                    showFaces &&
+                                                    selectedFace === face.id &&
+                                                    !managingFace
+                                                ) {
                                                     setSelectedFace(null);
                                                 }
                                             }}
@@ -398,7 +400,11 @@ export default function PhotoViewer({
                                                     {face.personName || 'Unknown'}
                                                 </div>
                                                 <div className="text-sm text-gray-500">
-                                                    {face.confidence ? `${Math.round(face.confidence * 100)}% confident` : 'Click to manage'}
+                                                    {face.confidence
+                                                        ? `${Math.round(
+                                                              face.confidence * 100
+                                                          )}% confident`
+                                                        : 'Click to manage'}
                                                 </div>
                                             </div>
                                         </div>
@@ -406,7 +412,7 @@ export default function PhotoViewer({
                                 </div>
                             </div>
                         )}
-                        
+
                         <div>
                             <h3 className="text-lg font-semibold text-gray-900 mb-6">Details</h3>
 
@@ -540,16 +546,29 @@ export default function PhotoViewer({
                             </button>
                         </div>
 
-                       {/* Face preview - cropped to bounding box */}
+                        {/* Face preview - cropped to bounding box */}
                         <div className="mb-4">
                             <div className="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden">
                                 <div
                                     className="absolute inset-0 bg-center bg-no-repeat"
                                     style={{
                                         backgroundImage: `url(http://localhost:3001${photo.url})`,
-                                        backgroundSize: `${((photo.width || 0) / managingFace.boundingBox.width) * 100}%`,
-                                        backgroundPositionX: `${(managingFace.boundingBox.x / (managingFace.boundingBox.width - (photo.width || 0))) * -100}%`,
-                                        backgroundPositionY: `${(managingFace.boundingBox.y / (managingFace.boundingBox.height - (photo.height || 0))) * -100}%`,
+                                        backgroundSize: `${
+                                            ((photo.width || 0) / managingFace.boundingBox.width) *
+                                            100
+                                        }%`,
+                                        backgroundPositionX: `${
+                                            (managingFace.boundingBox.x /
+                                                (managingFace.boundingBox.width -
+                                                    (photo.width || 0))) *
+                                            -100
+                                        }%`,
+                                        backgroundPositionY: `${
+                                            (managingFace.boundingBox.y /
+                                                (managingFace.boundingBox.height -
+                                                    (photo.height || 0))) *
+                                            -100
+                                        }%`,
                                     }}
                                 />
                             </div>
@@ -590,7 +609,9 @@ export default function PhotoViewer({
                                         .map((p) => (
                                             <button
                                                 key={p.id}
-                                                onClick={() => handleReassignFace(managingFace.id, p.id)}
+                                                onClick={() =>
+                                                    handleReassignFace(managingFace.id, p.id)
+                                                }
                                                 className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
                                             >
                                                 {p.thumbnailUrl ? (

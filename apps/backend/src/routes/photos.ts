@@ -90,7 +90,9 @@ export async function createFaceThumbnail(
     // Get file path - either from photoId or use the path directly
     let filePath: string;
     if (typeof photoIdOrPath === 'number') {
-        const photo = db.prepare('SELECT filename FROM photos WHERE id = ?').get(photoIdOrPath) as any;
+        const photo = db
+            .prepare('SELECT filename FROM photos WHERE id = ?')
+            .get(photoIdOrPath) as any;
         if (!photo) throw new Error('Photo not found');
         filePath = path.join(uploadDir, photo.filename);
     } else {
@@ -98,7 +100,7 @@ export async function createFaceThumbnail(
     }
 
     const facesDir = path.join(uploadDir, 'faces');
-    
+
     // Ensure faces directory exists
     if (!fs.existsSync(facesDir)) {
         fs.mkdirSync(facesDir, { recursive: true });
@@ -185,18 +187,20 @@ async function detectFacesInPhoto(
             }
 
             // Insert face detection record
-            const detectionResult = db.prepare(
-                `
+            const detectionResult = db
+                .prepare(
+                    `
         INSERT INTO face_detections (photo_id, person_id, face_encoding, bounding_box, confidence)
         VALUES (?, ?, ?, ?, ?)
       `
-            ).run(
-                photoId,
-                personId,
-                JSON.stringify(face.encoding),
-                JSON.stringify(face.boundingBox),
-                face.confidence
-            );
+                )
+                .run(
+                    photoId,
+                    personId,
+                    JSON.stringify(face.encoding),
+                    JSON.stringify(face.boundingBox),
+                    face.confidence
+                );
 
             faceDetectionId = detectionResult.lastInsertRowid as number;
 
@@ -529,13 +533,18 @@ router.get('/:id/faces', authMiddleware, (req: AuthRequest, res) => {
         const faces = faceDetections.map((face: any) => ({
             ...face,
             boundingBox: JSON.parse(face.boundingBox),
-            personThumbnailUrl: face.personThumbnail ? `/uploads/faces/${face.personThumbnail}` : null,
+            personThumbnailUrl: face.personThumbnail
+                ? `/uploads/faces/${face.personThumbnail}`
+                : null,
         }));
 
         res.json(faces);
     } catch (error) {
         console.error('Get face detections error:', error);
-        res.status(500).json({ error: 'Internal Server Error', message: 'Failed to get face detections' });
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: 'Failed to get face detections',
+        });
     }
 });
 

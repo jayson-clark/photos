@@ -26,13 +26,13 @@ export async function loadModels() {
     try {
         // Set TensorFlow backend
         await tf.ready();
-        
+
         await Promise.all([
             faceapi.nets.ssdMobilenetv1.loadFromDisk(modelsPath),
             faceapi.nets.faceLandmark68Net.loadFromDisk(modelsPath),
             faceapi.nets.faceRecognitionNet.loadFromDisk(modelsPath),
         ]);
-        
+
         modelsLoaded = true;
         console.log('✅ Face detection models loaded successfully');
     } catch (error: any) {

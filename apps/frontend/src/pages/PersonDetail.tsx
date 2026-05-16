@@ -178,7 +178,9 @@ export default function PersonDetail() {
                             }`}
                         >
                             <Image className="w-4 h-4" />
-                            {settingThumbnail ? 'Click a photo to set as thumbnail' : 'Change Thumbnail'}
+                            {settingThumbnail
+                                ? 'Click a photo to set as thumbnail'
+                                : 'Change Thumbnail'}
                         </button>
                     </div>
                 </div>

@@ -48,7 +48,13 @@ export default function People() {
     };
 
     const handleDeletePerson = async (person: Person) => {
-        if (!confirm(`Delete ${person.name || 'this person'}? This will remove face tags from all photos.`)) {
+        if (
+            !confirm(
+                `Delete ${
+                    person.name || 'this person'
+                }? This will remove face tags from all photos.`
+            )
+        ) {
             return;
         }
 
@@ -66,9 +72,7 @@ export default function People() {
 
     const toggleMergeSelection = (personId: number) => {
         setSelectedForMerge((prev) =>
-            prev.includes(personId)
-                ? prev.filter((id) => id !== personId)
-                : [...prev, personId]
+            prev.includes(personId) ? prev.filter((id) => id !== personId) : [...prev, personId]
         );
     };
 
@@ -87,7 +91,11 @@ export default function People() {
         const name1 = person1.name || `Person ${first}`;
         const name2 = person2.name || `Person ${second}`;
 
-        if (!confirm(`Merge "${name2}" into "${name1}"? All photos from ${name2} will be moved to ${name1}.`)) {
+        if (
+            !confirm(
+                `Merge "${name2}" into "${name1}"? All photos from ${name2} will be moved to ${name1}.`
+            )
+        ) {
             return;
         }
 
@@ -135,8 +143,8 @@ export default function People() {
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">People</h1>
                         <p className="text-gray-600 mt-2">
-                            {people.length} {people.length === 1 ? 'person' : 'people'} detected in your
-                            photos
+                            {people.length} {people.length === 1 ? 'person' : 'people'} detected in
+                            your photos
                         </p>
                     </div>
                     <div className="flex gap-2">
@@ -180,7 +188,9 @@ export default function People() {
                                 isSelected ? 'ring-4 ring-blue-500' : ''
                             }`}
                             onClick={() =>
-                                mergeMode ? toggleMergeSelection(person.id) : handleViewPerson(person.id)
+                                mergeMode
+                                    ? toggleMergeSelection(person.id)
+                                    : handleViewPerson(person.id)
                             }
                         >
                             <div className="aspect-square relative bg-gray-100">
@@ -235,7 +245,8 @@ export default function People() {
                                     {person.name || 'Unknown'}
                                 </h3>
                                 <p className="text-sm text-gray-500">
-                                    {person.photoCount} {person.photoCount === 1 ? 'photo' : 'photos'}
+                                    {person.photoCount}{' '}
+                                    {person.photoCount === 1 ? 'photo' : 'photos'}
                                 </p>
                             </div>
                         </div>
