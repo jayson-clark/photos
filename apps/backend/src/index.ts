@@ -44,6 +44,16 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
 });
 
+// Serve built frontend (production)
+const frontendDist =
+    process.env.FRONTEND_DIST_PATH || path.resolve(__dirname, '../../frontend/dist');
+if (require('fs').existsSync(frontendDist)) {
+    app.use(express.static(frontendDist));
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(frontendDist, 'index.html'));
+    });
+}
+
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
