@@ -1,3 +1,4 @@
+import './nodeUtilPolyfill';
 import * as faceapi from '@vladmandic/face-api';
 import * as tf from '@tensorflow/tfjs-node';
 import canvas from 'canvas';
